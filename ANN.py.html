@@ -1,0 +1,234 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+import os
+
+
+# In[2]:
+
+
+os.getcwd()
+
+
+# In[3]:
+
+
+os.chdir('/users/mohammadawais/desktop/ML DATA')
+
+
+# In[4]:
+
+
+import pandas as pd
+import numpy as np
+
+
+# In[5]:
+
+
+df=pd.read_csv('Churn_Modelling.csv')
+
+
+# In[6]:
+
+
+df.head()
+
+
+# # problem statement
+This dataset is belongs to any bank, and the problem with the bank is customer based on some constraint they
+leave the bank and thus bank is loosing their buisness. We have to identified the customer who are in future going
+leave the bank as the axis=1 Exited shows the binary outcome 1 meaning customer quits the bank and 0 meaning
+customer is still enrolled with the bank
+x=df.iloc[:, 3:13].values independent variable
+y =df.iloc[:, 13].values dependent variable
+# # preprocessing
+
+# In[7]:
+
+
+X=df.iloc[:,3:13].values
+y=df.iloc[:,13].values
+
+
+# In[8]:
+
+
+X
+
+
+# In[9]:
+
+
+y
+
+
+# In[10]:
+
+
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+
+
+# In[11]:
+
+
+X_1 = LabelEncoder()
+X[:, 1] = X_1.fit_transform(X[:, 1])
+X_2 = LabelEncoder()
+X[:, 2] = X_2.fit_transform(X[:, 2])
+
+
+# In[12]:
+
+
+# creating dummy variable
+onehotencoder = OneHotEncoder(categorical_features = [1])
+X = onehotencoder.fit_transform(X).toarray()
+X = X[:, 1:]
+# we drop axis=1 column 0 because not to fall in the trap of dummy variable
+
+
+# In[13]:
+
+
+# Splitting the dataset into the Training set and Test set
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 10)
+
+
+# In[14]:
+
+
+# Feature Scaling
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+
+# # Artificial Neural Network model Development
+
+# In[15]:
+
+
+import keras
+from keras.models import Sequential
+from keras.layers import Dense
+
+
+# In[16]:
+
+
+# Initialising the ANN
+obj = Sequential()
+
+
+# In[17]:
+
+
+# Adding the input layer and the first hidden layer
+obj.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu', input_dim = 11))
+
+output_dim=6 ---> how many nodes are there at first input layer, this value generally is taken through the adding
+total number of independent variable (in our case it is 11) divided by 2
+init='uniform' --> in the algorithm of training NN we specify the weight of NN equals to zero and not exactly zero
+, so we randomly initialize the value of the weight.
+activation'relu' --> relu = rectifier functon , basically during training of the NN two activation function are 
+very best according to research fellow 1.rectifier and 2.sigmoid
+input_dim=11 --> we specify the total number of nodes at hidden layer which is nothing but total number of
+independent variable in the problem statement(in our case it is 11)
+
+# In[18]:
+
+
+# Adding the second HIdden Layer
+obj.add(Dense(output_dim = 6, init = 'uniform', activation = 'relu'))
+# we remove the input_dim=11 as at our first input and hidden layer we already specified
+
+
+# In[19]:
+
+
+# Output layer
+obj.add(Dense(output_dim = 1, init = 'uniform', activation = 'sigmoid'))
+
+at output layer we need only one node and hence initialize output_dim =1 it is adjusted based on the problem, also
+we change the activation function sigmoid because the activation function is also adjusted as per the problem 
+statement and in our case we need binary outcomes.
+# Compiling the model
+
+# In[20]:
+
+
+obj.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+
+optimizer:
+    it is an algorithm which is used for the eoptimization of the weight accordingly and reducing the cost func
+    gradient descent and stochastic gradient descent are the two types of optimizer function which are generally
+    used. 'adam' algorithm is defined in stochastic gradient descent algorithm
+loss:
+    it is a loss function which calculates the loss as can be thought of root mean squared error loss in logistic
+    regression , if the outcome of the dependent variable is binary we use log loss function ('binary_crossentropy')
+metrics:
+    to calculate the difference between the predicted and actual value at the output layer of NN and is accuracy.
+    
+# Fitting the ANN model
+
+# In[21]:
+
+
+obj.fit(X_train, y_train,batch_size=10,nb_epoch=100)
+
+batch_size= 10 means number of observation after which we want to update
+nb_epoch=100 means running all the algorithm from step 1 to step 6 100 timeshighest accuracy is 86.26 percent.
+# predicting the test data
+
+# In[22]:
+
+
+y_pred=obj.predict(X_test)
+
+
+# In[23]:
+
+
+y_pred
+
+
+# In[24]:
+
+
+y_pred=(y_pred>0.5)
+# convrting the probability value into boolean and making the threshold at 50%
+
+
+# In[25]:
+
+
+y_pred
+
+
+# In[27]:
+
+
+from sklearn.metrics import confusion_matrix
+cm=confusion_matrix(y_test,y_pred)
+cm
+
+
+# In[28]:
+
+
+TF=1500
+TN=198
+FP=224
+FN=78
+accuracy=(TF+TN)/(TF+TN+FP+FN)
+accuracy
+
+
+# 84 percent is our accuracy.
+# 
